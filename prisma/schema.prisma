@@ -1,0 +1,583 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model EFMigrationsHistory {
+  MigrationId    String @id(map: "PK___EFMigrationsHistory") @db.VarChar(150)
+  ProductVersion String @db.VarChar(32)
+
+  @@map("__EFMigrationsHistory")
+}
+
+model ai_usage_logs {
+  id              String    @id(map: "PK_ai_usage_logs") @db.Uuid
+  user_id         String    @db.Uuid
+  feature_type    Int
+  used_at         DateTime  @db.Timestamptz(6)
+  request_summary String?   @db.VarChar(500)
+  tokens_used     Int
+  is_success      Boolean
+  error_message   String?   @db.VarChar(1000)
+  created_date    DateTime? @db.Timestamptz(6)
+  created_by      String?   @db.VarChar(36)
+  updated_date    DateTime? @db.Timestamptz(6)
+  updated_by      String?   @db.VarChar(36)
+  deleted_date    DateTime? @db.Timestamptz(6)
+  deleted_by      String?   @db.VarChar(36)
+  is_active       Boolean
+  users           users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_ai_usage_logs_users_user_id")
+
+  @@index([user_id, feature_type, used_at], map: "IX_ai_usage_logs_user_id_feature_type_used_at")
+}
+
+model authorities {
+  id              String            @id(map: "PK_authorities") @db.Uuid
+  key             Int               @unique(map: "IX_authorities_key")
+  created_date    DateTime?         @db.Timestamptz(6)
+  created_by      String?           @db.VarChar(36)
+  updated_date    DateTime?         @db.Timestamptz(6)
+  updated_by      String?           @db.VarChar(36)
+  deleted_date    DateTime?         @db.Timestamptz(6)
+  deleted_by      String?           @db.VarChar(36)
+  is_active       Boolean
+  roles_authority roles_authority[]
+  users_authority users_authority[]
+}
+
+model exams {
+  id                String          @id(map: "PK_exams") @db.Uuid
+  title             String          @db.VarChar(200)
+  description       String?         @db.VarChar(2000)
+  duration_minutes  Int
+  passing_score     Int
+  xp_reward         Int
+  difficulty        Int
+  schedule_start    DateTime?       @db.Timestamptz(6)
+  schedule_end      DateTime?       @db.Timestamptz(6)
+  shuffle_questions Boolean
+  shuffle_options   Boolean
+  max_attempts      Int
+  total_questions   Int
+  created_date      DateTime?       @db.Timestamptz(6)
+  created_by        String?         @db.VarChar(36)
+  updated_date      DateTime?       @db.Timestamptz(6)
+  updated_by        String?         @db.VarChar(36)
+  deleted_date      DateTime?       @db.Timestamptz(6)
+  deleted_by        String?         @db.VarChar(36)
+  is_active         Boolean
+  review_settings   Json?
+  questions         questions[]
+  quiz_attempts     quiz_attempts[]
+  quiz_sessions     quiz_sessions[]
+}
+
+model file_storage {
+  id           String    @id(map: "PK_file_storage") @db.Uuid
+  file_name    String?
+  file_size    Int?
+  file_type    String?
+  file_data    Bytes?
+  created_date DateTime? @db.Timestamptz(6)
+  created_by   String?   @db.VarChar(36)
+  updated_date DateTime? @db.Timestamptz(6)
+  updated_by   String?   @db.VarChar(36)
+  deleted_date DateTime? @db.Timestamptz(6)
+  deleted_by   String?   @db.VarChar(36)
+  is_active    Boolean
+}
+
+model flashcard_decks {
+  id           String       @id(map: "PK_flashcard_decks") @db.Uuid
+  title        String       @db.VarChar(200)
+  description  String?      @db.VarChar(1000)
+  image_url    String?      @db.VarChar(500)
+  order        Int
+  difficulty   Int
+  is_public    Boolean
+  copy_count   Int
+  created_date DateTime?    @db.Timestamptz(6)
+  created_by   String?      @db.VarChar(36)
+  updated_date DateTime?    @db.Timestamptz(6)
+  updated_by   String?      @db.VarChar(36)
+  deleted_date DateTime?    @db.Timestamptz(6)
+  deleted_by   String?      @db.VarChar(36)
+  is_active    Boolean
+  user_id      String       @default(dbgenerated("'00000000-0000-0000-0000-000000000000'::uuid")) @db.Uuid
+  users        users        @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_flashcard_decks_users_user_id")
+  flashcards   flashcards[]
+
+  @@index([is_public], map: "IX_flashcard_decks_is_public")
+  @@index([user_id], map: "IX_flashcard_decks_user_id")
+}
+
+model flashcard_progress {
+  id               String     @id(map: "PK_flashcard_progress") @db.Uuid
+  user_id          String     @db.Uuid
+  flashcard_id     String     @db.Uuid
+  status           Int
+  repetition_count Int
+  ease_factor      Float
+  interval_days    Int
+  next_review_at   DateTime?  @db.Timestamptz(6)
+  last_reviewed_at DateTime?  @db.Timestamptz(6)
+  correct_count    Int
+  incorrect_count  Int
+  created_date     DateTime?  @db.Timestamptz(6)
+  created_by       String?    @db.VarChar(36)
+  updated_date     DateTime?  @db.Timestamptz(6)
+  updated_by       String?    @db.VarChar(36)
+  deleted_date     DateTime?  @db.Timestamptz(6)
+  deleted_by       String?    @db.VarChar(36)
+  is_active        Boolean
+  flashcards       flashcards @relation(fields: [flashcard_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_flashcard_progress_flashcards_flashcard_id")
+  users            users      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_flashcard_progress_users_user_id")
+
+  @@unique([user_id, flashcard_id], map: "IX_flashcard_progress_user_id_flashcard_id")
+  @@index([flashcard_id], map: "IX_flashcard_progress_flashcard_id")
+  @@index([next_review_at], map: "IX_flashcard_progress_next_review_at")
+}
+
+model flashcards {
+  id                 String               @id(map: "PK_flashcards") @db.Uuid
+  deck_id            String               @db.Uuid
+  english_term       String               @db.VarChar(500)
+  vietnamese_term    String               @db.VarChar(500)
+  english_example    String?              @db.VarChar(1000)
+  vietnamese_example String?              @db.VarChar(1000)
+  pronunciation      String?              @db.VarChar(200)
+  audio_url          String?              @db.VarChar(500)
+  image_url          String?              @db.VarChar(500)
+  difficulty         Int
+  order              Int
+  metadata           Json?
+  created_date       DateTime?            @db.Timestamptz(6)
+  created_by         String?              @db.VarChar(36)
+  updated_date       DateTime?            @db.Timestamptz(6)
+  updated_by         String?              @db.VarChar(36)
+  deleted_date       DateTime?            @db.Timestamptz(6)
+  deleted_by         String?              @db.VarChar(36)
+  is_active          Boolean
+  flashcard_progress flashcard_progress[]
+  flashcard_decks    flashcard_decks      @relation(fields: [deck_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_flashcards_flashcard_decks_deck_id")
+
+  @@index([deck_id], map: "IX_flashcards_deck_id")
+}
+
+model leaderboard_cache {
+  id                 String    @id(map: "PK_leaderboard_cache") @db.Uuid
+  user_id            String    @db.Uuid
+  user_name          String    @db.VarChar(200)
+  avatar             String?   @db.VarChar(500)
+  rank               Int
+  previous_rank      Int?
+  ranking_score      BigInt
+  period_type        String?   @db.VarChar(20)
+  period_start       DateTime? @db.Timestamptz(6)
+  period_end         DateTime? @db.Timestamptz(6)
+  stats              Json?
+  last_calculated_at DateTime  @db.Timestamptz(6)
+  expires_at         DateTime  @db.Timestamptz(6)
+  created_date       DateTime? @db.Timestamptz(6)
+  created_by         String?   @db.VarChar(36)
+  updated_date       DateTime? @db.Timestamptz(6)
+  updated_by         String?   @db.VarChar(36)
+  deleted_date       DateTime? @db.Timestamptz(6)
+  deleted_by         String?   @db.VarChar(36)
+  is_active          Boolean
+  users              users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_leaderboard_cache_users_user_id")
+
+  @@index([user_id], map: "IX_leaderboard_cache_user_id")
+}
+
+model levels {
+  id               String          @id(map: "PK_levels") @db.Uuid
+  section_id       String          @db.Uuid
+  title            String          @db.VarChar(200)
+  description      String?         @db.VarChar(1000)
+  order            Int
+  difficulty       Int
+  prerequisite_ids Json?
+  config           Json?
+  created_date     DateTime?       @db.Timestamptz(6)
+  created_by       String?         @db.VarChar(36)
+  updated_date     DateTime?       @db.Timestamptz(6)
+  updated_by       String?         @db.VarChar(36)
+  deleted_date     DateTime?       @db.Timestamptz(6)
+  deleted_by       String?         @db.VarChar(36)
+  is_active        Boolean
+  sections         sections        @relation(fields: [section_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_levels_sections_section_id")
+  questions        questions[]
+  quiz_attempts    quiz_attempts[]
+  quiz_sessions    quiz_sessions[]
+  user_progress    user_progress[]
+
+  @@index([section_id], map: "IX_levels_section_id")
+}
+
+model login_history {
+  id           String    @id(map: "PK_login_history") @db.Uuid
+  user_id      String?   @db.Uuid
+  position     String?
+  device_imei  String?
+  created_date DateTime? @db.Timestamptz(6)
+  created_by   String?   @db.VarChar(36)
+  updated_date DateTime? @db.Timestamptz(6)
+  updated_by   String?   @db.VarChar(36)
+  deleted_date DateTime? @db.Timestamptz(6)
+  deleted_by   String?   @db.VarChar(36)
+  is_active    Boolean
+}
+
+model payments {
+  id                 String               @id(map: "PK_payments") @db.Uuid
+  amount             Decimal              @db.Decimal
+  created_by         String?              @db.VarChar(36)
+  created_date       DateTime?            @db.Timestamptz(6)
+  email              String?
+  name               String?
+  deleted_by         String?              @db.VarChar(36)
+  deleted_date       DateTime?            @db.Timestamptz(6)
+  description        String?
+  payment_id         String?
+  is_active          Boolean
+  purchased_plan     Int
+  status             Int
+  transaction_id     String?
+  updated_by         String?              @db.VarChar(36)
+  updated_date       DateTime?            @db.Timestamptz(6)
+  user_id            String               @db.Uuid
+  user_subscriptions user_subscriptions[]
+}
+
+model questions {
+  id             String    @id(map: "PK_questions") @db.Uuid
+  level_id       String?   @db.Uuid
+  type           Int
+  text           String    @db.VarChar(1000)
+  correct_answer String    @db.VarChar(500)
+  difficulty     Int
+  points         Int
+  order          Int
+  options        Json?
+  type_data      Json?
+  media          Json?
+  created_date   DateTime? @db.Timestamptz(6)
+  created_by     String?   @db.VarChar(36)
+  updated_date   DateTime? @db.Timestamptz(6)
+  updated_by     String?   @db.VarChar(36)
+  deleted_date   DateTime? @db.Timestamptz(6)
+  deleted_by     String?   @db.VarChar(36)
+  is_active      Boolean
+  exam_id        String?   @db.Uuid
+  exams          exams?    @relation(fields: [exam_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_questions_exams_exam_id")
+  levels         levels?   @relation(fields: [level_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_questions_levels_level_id")
+
+  @@index([exam_id], map: "IX_questions_exam_id")
+  @@index([level_id], map: "IX_questions_level_id")
+}
+
+model quiz_attempts {
+  id                 String         @id(map: "PK_quiz_attempts") @db.Uuid
+  user_id            String         @db.Uuid
+  level_id           String?        @db.Uuid
+  section_id         String?        @db.Uuid
+  score              Int
+  total_questions    Int
+  correct_answers    Int
+  accuracy           Float
+  passed             Boolean
+  hearts_used        Int
+  xp_earned          Int
+  streak_earned      Boolean
+  started_at         DateTime       @db.Timestamptz(6)
+  completed_at       DateTime?      @db.Timestamptz(6)
+  time_taken_seconds Int
+  status             Int
+  answers            Json?
+  created_date       DateTime?      @db.Timestamptz(6)
+  created_by         String?        @db.VarChar(36)
+  updated_date       DateTime?      @db.Timestamptz(6)
+  updated_by         String?        @db.VarChar(36)
+  deleted_date       DateTime?      @db.Timestamptz(6)
+  deleted_by         String?        @db.VarChar(36)
+  is_active          Boolean
+  session_id         String?        @db.Uuid
+  exam_id            String?        @db.Uuid
+  exams              exams?         @relation(fields: [exam_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_quiz_attempts_exams_exam_id")
+  levels             levels?        @relation(fields: [level_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_quiz_attempts_levels_level_id")
+  quiz_sessions      quiz_sessions? @relation(fields: [session_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_quiz_attempts_quiz_sessions_session_id")
+  sections           sections?      @relation(fields: [section_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_quiz_attempts_sections_section_id")
+  users              users          @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_quiz_attempts_users_user_id")
+
+  @@index([exam_id], map: "IX_quiz_attempts_exam_id")
+  @@index([level_id], map: "IX_quiz_attempts_level_id")
+  @@index([section_id], map: "IX_quiz_attempts_section_id")
+  @@index([session_id], map: "IX_quiz_attempts_session_id")
+  @@index([user_id], map: "IX_quiz_attempts_user_id")
+}
+
+model quiz_sessions {
+  id                     String          @id(map: "PK_quiz_sessions") @db.Uuid
+  user_id                String          @db.Uuid
+  level_id               String?         @db.Uuid
+  status                 Int
+  hearts_remaining       Int
+  current_question_index Int
+  started_at             DateTime        @db.Timestamptz(6)
+  completed_at           DateTime?       @db.Timestamptz(6)
+  expires_at             DateTime        @db.Timestamptz(6)
+  question_ids           Json?
+  answers                Json?
+  created_date           DateTime?       @db.Timestamptz(6)
+  created_by             String?         @db.VarChar(36)
+  updated_date           DateTime?       @db.Timestamptz(6)
+  updated_by             String?         @db.VarChar(36)
+  deleted_date           DateTime?       @db.Timestamptz(6)
+  deleted_by             String?         @db.VarChar(36)
+  is_active              Boolean
+  exam_id                String?         @db.Uuid
+  quiz_attempts          quiz_attempts[]
+  exams                  exams?          @relation(fields: [exam_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_quiz_sessions_exams_exam_id")
+  levels                 levels?         @relation(fields: [level_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_quiz_sessions_levels_level_id")
+  users                  users           @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_quiz_sessions_users_user_id")
+
+  @@index([exam_id], map: "IX_quiz_sessions_exam_id")
+  @@index([level_id], map: "IX_quiz_sessions_level_id")
+  @@index([user_id], map: "IX_quiz_sessions_user_id")
+}
+
+model refresh_token {
+  id           String    @id(map: "PK_refresh_token") @db.Uuid
+  token        String
+  expired_at   DateTime  @db.Timestamptz(6)
+  token_id     String    @db.Uuid
+  created_date DateTime? @db.Timestamptz(6)
+  created_by   String?   @db.VarChar(36)
+  updated_date DateTime? @db.Timestamptz(6)
+  updated_by   String?   @db.VarChar(36)
+  deleted_date DateTime? @db.Timestamptz(6)
+  deleted_by   String?   @db.VarChar(36)
+  is_active    Boolean
+
+  tokenRef token @relation(fields: [token_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_refresh_token_token_token_id")
+
+  @@index([token_id], map: "IX_refresh_token_token_id")
+}
+
+model roles {
+  id              String            @id(map: "PK_roles") @db.Uuid
+  key             Int               @unique(map: "IX_roles_key")
+  created_date    DateTime?         @db.Timestamptz(6)
+  created_by      String?           @db.VarChar(36)
+  updated_date    DateTime?         @db.Timestamptz(6)
+  updated_by      String?           @db.VarChar(36)
+  deleted_date    DateTime?         @db.Timestamptz(6)
+  deleted_by      String?           @db.VarChar(36)
+  is_active       Boolean
+  roles_authority roles_authority[]
+  users_role      users_role[]
+}
+
+model roles_authority {
+  id             String       @id(map: "PK_roles_authority") @db.Uuid
+  roles_id       String?      @db.Uuid
+  authorities_id String?      @db.Uuid
+  created_date   DateTime?    @db.Timestamptz(6)
+  created_by     String?      @db.VarChar(36)
+  updated_date   DateTime?    @db.Timestamptz(6)
+  updated_by     String?      @db.VarChar(36)
+  deleted_date   DateTime?    @db.Timestamptz(6)
+  deleted_by     String?      @db.VarChar(36)
+  is_active      Boolean
+  authorities    authorities? @relation(fields: [authorities_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_roles_authority_authorities_authorities_id")
+  roles          roles?       @relation(fields: [roles_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_roles_authority_roles_roles_id")
+
+  @@index([authorities_id], map: "IX_roles_authority_authorities_id")
+  @@index([roles_id], map: "IX_roles_authority_roles_id")
+}
+
+model sections {
+  id               String          @id(map: "PK_sections") @db.Uuid
+  title            String          @db.VarChar(200)
+  description      String?         @db.VarChar(1000)
+  order            Int
+  image_url        String?         @db.VarChar(500)
+  icon_url         String?         @db.VarChar(500)
+  is_free_access   Boolean
+  required_plan    Int
+  prerequisite_ids Json?
+  metadata         Json?
+  created_date     DateTime?       @db.Timestamptz(6)
+  created_by       String?         @db.VarChar(36)
+  updated_date     DateTime?       @db.Timestamptz(6)
+  updated_by       String?         @db.VarChar(36)
+  deleted_date     DateTime?       @db.Timestamptz(6)
+  deleted_by       String?         @db.VarChar(36)
+  is_active        Boolean
+  levels           levels[]
+  quiz_attempts    quiz_attempts[]
+  user_progress    user_progress[]
+}
+
+model token {
+  id            String          @id(map: "PK_token") @db.Uuid
+  token         String
+  user_id       String          @unique(map: "IX_token_user_id") @db.Uuid
+  created_date  DateTime?       @db.Timestamptz(6)
+  created_by    String?         @db.VarChar(36)
+  updated_date  DateTime?       @db.Timestamptz(6)
+  updated_by    String?         @db.VarChar(36)
+  deleted_date  DateTime?       @db.Timestamptz(6)
+  deleted_by    String?         @db.VarChar(36)
+  is_active     Boolean
+  refresh_token refresh_token[]
+}
+
+model user_deactivate_history {
+  id           String    @id(map: "PK_user_deactivate_history") @db.Uuid
+  user_id      String    @db.Uuid
+  Reason       String?
+  date_recover DateTime? @db.Timestamptz(6)
+  date_off     DateTime? @db.Timestamptz(6)
+  created_date DateTime? @db.Timestamptz(6)
+  created_by   String?   @db.VarChar(36)
+  updated_date DateTime? @db.Timestamptz(6)
+  updated_by   String?   @db.VarChar(36)
+  deleted_date DateTime? @db.Timestamptz(6)
+  deleted_by   String?   @db.VarChar(36)
+  is_active    Boolean
+}
+
+model user_progress {
+  id              String    @id(map: "PK_user_progress") @db.Uuid
+  user_id         String    @db.Uuid
+  section_id      String    @db.Uuid
+  level_id        String    @db.Uuid
+  status          Int
+  started_at      DateTime? @db.Timestamptz(6)
+  completed_at    DateTime? @db.Timestamptz(6)
+  last_attempt_at DateTime? @db.Timestamptz(6)
+  stats           Json?
+  created_date    DateTime? @db.Timestamptz(6)
+  created_by      String?   @db.VarChar(36)
+  updated_date    DateTime? @db.Timestamptz(6)
+  updated_by      String?   @db.VarChar(36)
+  deleted_date    DateTime? @db.Timestamptz(6)
+  deleted_by      String?   @db.VarChar(36)
+  is_active       Boolean
+  levels          levels    @relation(fields: [level_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_user_progress_levels_level_id")
+  sections        sections  @relation(fields: [section_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_user_progress_sections_section_id")
+  users           users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_user_progress_users_user_id")
+
+  @@index([level_id], map: "IX_user_progress_level_id")
+  @@index([section_id], map: "IX_user_progress_section_id")
+  @@index([user_id], map: "IX_user_progress_user_id")
+}
+
+model user_subscriptions {
+  id                  String    @id(map: "PK_user_subscriptions") @db.Uuid
+  payment_id          String?   @db.Uuid
+  user_id             String    @db.Uuid
+  auto_renew          Boolean
+  cancellation_reason String?
+  cancelled_date      DateTime? @db.Timestamptz(6)
+  created_by          String?   @db.VarChar(36)
+  created_date        DateTime? @db.Timestamptz(6)
+  deleted_by          String?   @db.VarChar(36)
+  deleted_date        DateTime? @db.Timestamptz(6)
+  end_date            DateTime? @db.Timestamptz(6)
+  next_billing_date   DateTime? @db.Timestamptz(6)
+  plan                Int
+  start_date          DateTime  @db.Timestamptz(6)
+  status              Int
+  updated_by          String?   @db.VarChar(36)
+  updated_date        DateTime? @db.Timestamptz(6)
+  is_active           Boolean   @default(false)
+  payments            payments? @relation(fields: [payment_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_user_subscriptions_payments_payment_id")
+  users               users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_user_subscriptions_users_user_id")
+
+  @@index([payment_id], map: "IX_user_subscriptions_payment_id")
+  @@index([user_id], map: "IX_user_subscriptions_user_id")
+}
+
+model users {
+  id                        String               @id(map: "PK_users") @db.Uuid
+  email                     String?              @unique(map: "IX_users_email") @db.VarChar(256)
+  username                  String?              @unique(map: "IX_users_username") @db.VarChar(100)
+  full_name                 String?              @db.VarChar(200)
+  avatar                    String?              @db.VarChar(500)
+  account_type              Int
+  account_status            Int
+  password                  String?              @db.VarChar(500)
+  phone_number              String?              @db.VarChar(20)
+  created_date              DateTime?            @db.Timestamptz(6)
+  created_by                String?              @db.VarChar(36)
+  updated_date              DateTime?            @db.Timestamptz(6)
+  updated_by                String?              @db.VarChar(36)
+  deleted_date              DateTime?            @db.Timestamptz(6)
+  deleted_by                String?              @db.VarChar(36)
+  is_active                 Boolean
+  achievements              Json?
+  current_plan              Int                  @default(0)
+  email_confirmed           Boolean              @default(false)
+  hearts                    Int                  @default(0)
+  last_activity_at          DateTime?            @db.Timestamptz(6)
+  last_heart_regenerated_at DateTime?            @db.Timestamptz(6)
+  level                     Int                  @default(0)
+  plan_end_date             DateTime?            @db.Timestamptz(6)
+  settings                  Json?
+  streak_data               Json?
+  total_xp                  Int                  @default(0)
+  has_bonus_heart           Boolean              @default(false)
+  ai_usage_logs             ai_usage_logs[]
+  flashcard_decks           flashcard_decks[]
+  flashcard_progress        flashcard_progress[]
+  leaderboard_cache         leaderboard_cache[]
+  quiz_attempts             quiz_attempts[]
+  quiz_sessions             quiz_sessions[]
+  user_progress             user_progress[]
+  user_subscriptions        user_subscriptions[]
+  users_role                users_role[]
+}
+
+model users_authority {
+  id             String       @id(map: "PK_users_authority") @db.Uuid
+  users_role_id  String?      @db.Uuid
+  authorities_id String?      @db.Uuid
+  created_date   DateTime?    @db.Timestamptz(6)
+  created_by     String?      @db.VarChar(36)
+  updated_date   DateTime?    @db.Timestamptz(6)
+  updated_by     String?      @db.VarChar(36)
+  deleted_date   DateTime?    @db.Timestamptz(6)
+  deleted_by     String?      @db.VarChar(36)
+  is_active      Boolean
+  authorities    authorities? @relation(fields: [authorities_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_users_authority_authorities_authorities_id")
+  users_role     users_role?  @relation(fields: [users_role_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_users_authority_users_role_users_role_id")
+
+  @@index([authorities_id], map: "IX_users_authority_authorities_id")
+  @@index([users_role_id], map: "IX_users_authority_users_role_id")
+}
+
+model users_role {
+  id              String            @id(map: "PK_users_role") @db.Uuid
+  role_id         String?           @db.Uuid
+  user_id         String?           @db.Uuid
+  created_date    DateTime?         @db.Timestamptz(6)
+  created_by      String?           @db.VarChar(36)
+  updated_date    DateTime?         @db.Timestamptz(6)
+  updated_by      String?           @db.VarChar(36)
+  deleted_date    DateTime?         @db.Timestamptz(6)
+  deleted_by      String?           @db.VarChar(36)
+  is_active       Boolean
+  users_authority users_authority[]
+  roles           roles?            @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_users_role_roles_role_id")
+  users           users?            @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_users_role_users_user_id")
+
+  @@index([role_id], map: "IX_users_role_role_id")
+  @@index([user_id], map: "IX_users_role_user_id")
+}
